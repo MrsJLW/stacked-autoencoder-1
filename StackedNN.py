@@ -98,6 +98,7 @@ def train_nn(network_architecture, network_layers, learning_rate=0.0001,
     nn = NN(network_architecture, network_layers, learning_rate=learning_rate, batch_size=batch_size)
     # Training cycle                                                                     
     trainCost = []
+    testCost = []
     for epoch in range(training_epochs):
         avg_cost = 0.
         total_batch = int(n_samples / batch_size)
@@ -117,19 +118,28 @@ def train_nn(network_architecture, network_layers, learning_rate=0.0001,
         if epoch % 10 == 0:
             print("Epoch:", '%04d' % (epoch+1), \
                   "cost=", "{:.9f}".format(avg_cost))
-            trainCost.append("{:.9f}".format(avg_cost))
 
         # Test trained model
-        print('training:', nn.accuracy.eval({nn.x: train_dataset[0:n_samples], nn.y: train_labels[0:n_samples]}))
-        print('testing:', nn.accuracy.eval({nn.x: valid_dataset[0:100], nn.y: valid_labels[0:100]}))
+        # print('training:', nn.accuracy.eval({nn.x: train_dataset[0:n_samples], nn.y: train_labels[0:n_samples]}))
+        # print('testing:', nn.accuracy.eval({nn.x: valid_dataset[0:100], nn.y: valid_labels[0:100]}))
+
+        # Test trained model
+        tempTrainAcc = nn.accuracy.eval({nn.x: train_dataset[0:n_samples], nn.y: train_labels[0:n_samples]})
+        print("Training Accuracy: ", tempTrainAcc)
+        trainCost.append(tempTrainAcc)
+        tempTestAcc = nn.accuracy.eval({nn.x: valid_dataset[0:5000], nn.y: valid_labels[0:5000]})
+        print("Testing Accuracy: ", tempTestAcc)
+        testCost.append(tempTestAcc)
 
     w1, w2, w3 = nn.getWeights()
 
     printWeights(w1, 'W1.png')
     printWeights(w2, 'W2.png')
     printWeights(w3, 'W3.png')
+    print('training costs: ', trainCost)
 
-    return nn, trainCost
+
+    return nn, trainCost, testCost
 
 ############ helpers #######################################
 
@@ -162,12 +172,21 @@ with open(pickle_file, 'rb') as f:
 
 print('W2 shape', network_layers['W2'].shape[1])
 
-x_sample = test_dataset[0:100]
-y_sample = test_labels[0:100]
+x_sample = test_dataset[0:5000]
+y_sample = test_labels[0:5000]
 
-nn, trainCost4 = train_nn(network_architecture, network_layers, batch_size=100, training_epochs=10, learning_rate=1.,n_samples=10000)
+nn, trainCost, testCost = train_nn(network_architecture, network_layers, batch_size=100, training_epochs=250, learning_rate=1.,n_samples=40000)
+
+plt.clf()
+plt.plot(trainCost, label = 'Training Cost')
+plt.plot(testCost, label = 'Testing Cost')
+plt.xlabel("Epoch")
+plt.ylabel("Accuracy")
+plt.legend()
+plt.savefig('Compression_accuracy.png')
+
 x_reconstruct,testcost = nn.predict(x_sample, y_sample)
-print("test cost: ", testcost)
+# print("test cost: ", testcost)
 # Test trained model
 # print(nn.auc.eval({nn.x: x_sample, nn.y_: y_sample}))
    
