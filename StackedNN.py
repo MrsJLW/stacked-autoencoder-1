@@ -1,7 +1,6 @@
 import pickle
 import numpy as np
 import tensorflow as tf
-from PIL import Image
 from utils import *
 import matplotlib.pyplot as plt
 from sklearn.metrics import roc_auc_score
@@ -29,23 +28,23 @@ class NN(object):
         self.y = tf.placeholder(tf.float32, [None, network_architecture["n_classes"]])
 
 
-        W1 = tf.Variable(network_layers['W1']) #from autoencoder1
-        W2 = tf.Variable(network_layers['W2']) #from autoencoder2
+        self.W1 = tf.Variable(network_layers['W1']) #from autoencoder1
+        self.W2 = tf.Variable(network_layers['W2']) #from autoencoder2
         #NN weights
-        W3 = tf.Variable(tf.random_uniform((network_layers['W2'].shape[1], network_architecture["n_classes"])))
+        self.W3 = tf.Variable(tf.random_uniform((network_layers['W2'].shape[1], network_architecture["n_classes"])))
         b1 = tf.Variable(network_layers['b1']) #from autoencoder1
         b2 = tf.Variable(network_layers['b2']) #from autoencoder2
         #NN bias
         b3 = tf.Variable(tf.ones([network_architecture["n_classes"]], dtype=tf.float32))
 
-        print('W3', W3.get_shape())
+        print('W3', self.W3.get_shape())
         #activation function - softmax, softplus, or tanh?
         #hidden layer
-        self.h1 = tf.nn.tanh(tf.add(tf.matmul(self.x, W1), b1))
-        self.h2 = tf.nn.tanh(tf.add(tf.matmul(self.h1, W2), b2))
+        self.h1 = tf.nn.tanh(tf.add(tf.matmul(self.x, self.W1), b1))
+        self.h2 = tf.nn.tanh(tf.add(tf.matmul(self.h1, self.W2), b2))
         print('h2', self.h2.get_shape())
         #prediction
-        self.output = tf.nn.softmax(tf.add(tf.matmul(self.h2, W3),b3))
+        self.output = tf.nn.softmax(tf.add(tf.matmul(self.h2, self.W3),b3))
         
         # _ = tf.histogram_summary('weights', W)
         # _ = tf.histogram_summary('biases_encode', b_encode)
@@ -85,6 +84,9 @@ class NN(object):
     def predict(self, X, Y):
         return self.sess.run(self.output,feed_dict={self.x: X, self.y: Y}),\
                self.sess.run(self.cost,feed_dict={self.x: X, self.y: Y})
+
+    def getWeights(self):
+        return self.sess.run(self.W1), self.sess.run(self.W2), self.sess.run(self.W3)
             
         
             
@@ -120,6 +122,13 @@ def train_nn(network_architecture, network_layers, learning_rate=0.0001,
         # Test trained model
         print('training:', nn.accuracy.eval({nn.x: train_dataset[0:n_samples], nn.y: train_labels[0:n_samples]}))
         print('testing:', nn.accuracy.eval({nn.x: valid_dataset[0:100], nn.y: valid_labels[0:100]}))
+
+    w1, w2, w3 = nn.getWeights()
+
+    printWeights(w1, 'W1.png')
+    printWeights(w2, 'W2.png')
+    printWeights(w3, 'W3.png')
+
     return nn, trainCost
 
 ############ helpers #######################################
@@ -127,8 +136,9 @@ def train_nn(network_architecture, network_layers, learning_rate=0.0001,
 
 image_size = 28
 num_labels = 10
-pickle_file = 'notMNIST_All.pickle'
+pickle_file = '/media/caitlin/UbiComp2015/notMNIST/notMNIST_All.pickle'
 
+print('getting data...')
 train_dataset, train_labels,valid_dataset, valid_labels, test_dataset, test_labels = getnotMNISTData(image_size, num_labels, pickle_file)
 
 print ('Training set', train_dataset.shape, train_labels.shape)
@@ -139,7 +149,7 @@ network_architecture = dict(n_hidden=500, # 1st layer encoder neurons
                             n_input=784, # MNIST data input (img shape: 28*28)
                             n_classes=10)
 
-pickle_file = 'SecondLayerWeights.pickle'
+pickle_file = '/media/caitlin/UbiComp2015/notMNIST/SecondLayerWeights.pickle'
 
 with open(pickle_file, 'rb') as f:
   save = pickle.load(f)
@@ -155,7 +165,7 @@ print('W2 shape', network_layers['W2'].shape[1])
 x_sample = test_dataset[0:100]
 y_sample = test_labels[0:100]
 
-nn, trainCost4 = train_nn(network_architecture, network_layers, batch_size=100, training_epochs=100, learning_rate=1.,n_samples=10000)
+nn, trainCost4 = train_nn(network_architecture, network_layers, batch_size=100, training_epochs=10, learning_rate=1.,n_samples=10000)
 x_reconstruct,testcost = nn.predict(x_sample, y_sample)
 print("test cost: ", testcost)
 # Test trained model
