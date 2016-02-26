@@ -212,6 +212,7 @@ def saveReconFig(title, x_sample, x_reconstruct, n):
 
 # plot training cost and testing cost
 def plotTraining(trainCost, testCost, filename):
+    plt.clf()
     plt.plot(trainCost, label = 'Training Cost')
     plt.plot(testCost, label = 'Validation Cost')
     plt.xlabel("Epoch")
