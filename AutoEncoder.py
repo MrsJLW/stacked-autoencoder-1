@@ -150,12 +150,12 @@ network_architecture = dict(n_input=784,
                             n_hidden=100)
 
 
-n_samples=20000
+n_samples=40000
 n_valid = 5000
 x_sample = valid_dataset[0:n_valid]
 
 #train first autoencoder
-dae, trainCost1, testCost1 = train(network_architecture, train_dataset, x_sample, batch_size=100, training_epochs=50, learning_rate=5., n_samples=n_samples, noise=0)
+dae, trainCost1, testCost1 = train(network_architecture, train_dataset, x_sample, batch_size=100, training_epochs=8, learning_rate=5., n_samples=n_samples, noise=0)
 print("train cost: ", trainCost1)
 
 #reconstruct input
@@ -183,7 +183,7 @@ network_architecture = dict(n_input=100, # 1st layer encoder neurons
                             n_hidden=64) # MNIST data input (img shape: 28*28)
 
 #train second autoencoder
-dae, trainCost2, testCost2 = train(network_architecture, train_dataset2, valid_dataset2, batch_size=100, training_epochs=50, learning_rate=5., n_samples=n_samples, noise=0)
+dae, trainCost2, testCost2 = train(network_architecture, train_dataset2, valid_dataset2, batch_size=100, training_epochs=1, learning_rate=5., n_samples=n_samples, noise=0)
 print("train cost: ", trainCost2)
 
 # output hidden Layer
@@ -198,7 +198,8 @@ b_encode = dae.sess.run(dae.b_encode)
 b2 = np.tile(b_encode,(n_samples,1))
 
 pickle_file = 'Weights.pickle'
-
+print('w1: ', W1.shape)
+print('w2: ', W1.shape)
 try:
    f = open(pickle_file, 'wb')
    save = {
